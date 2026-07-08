@@ -268,7 +268,7 @@ public partial class BCryptCore
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Char64(char character)
     {
-        return character < 0 || character > Index64.Length ? -1 : Index64[character];
+        return character >= Index64.Length ? -1 : Index64[character];
     }
 
     /// <summary>Initializes the Blowfish key schedule.</summary>
