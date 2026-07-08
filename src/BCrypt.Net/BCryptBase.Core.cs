@@ -88,7 +88,7 @@ public partial class BCryptCore
         int startingOffset;
         char bcryptMinorRevision = (char)0;
 
-        if (salt[0] != '$' || salt[1] != '2')
+        if (salt.Length < 3 || salt[0] != '$' || salt[1] != '2')
         {
             throw new SaltParseException("Invalid salt version");
         }
@@ -99,6 +99,11 @@ public partial class BCryptCore
         }
         else
         {
+            if (salt.Length < 4)
+            {
+                throw new SaltParseException("Invalid salt revision");
+            }
+
             bcryptMinorRevision = salt[2];
             if (bcryptMinorRevision != 'a' && bcryptMinorRevision != 'b' && bcryptMinorRevision != 'x' &&
                 bcryptMinorRevision != 'y' || salt[3] != '$')
@@ -111,6 +116,11 @@ public partial class BCryptCore
 
         // Extract number of rounds
         // Extract details from salt
+        if (salt.Length <= startingOffset + 2 || salt[startingOffset + 2] != '$')
+        {
+            throw new SaltParseException("Missing salt rounds");
+        }
+
         if (!int.TryParse(salt.Slice(startingOffset, 2), NumberStyles.None, CultureInfo.InvariantCulture, out int workFactor))
         {
             throw new SaltParseException("Missing salt rounds");
@@ -134,6 +144,11 @@ public partial class BCryptCore
                 Span<byte> utf8Buffer = stackalloc byte[SafeUTF8.GetMaxByteCount(inputKey.Length + (appendNul ? 1 : 0))];
                 try
                 {
+                    if (salt.Length < startingOffset + 25)
+                    {
+                        throw new SaltParseException("Invalid salt");
+                    }
+
                     int bytesWritten = SafeUTF8.GetBytes(inputKey, utf8Buffer);
                     if (appendNul) utf8Buffer[bytesWritten++] = 0;
                     Span<byte> inputBytes = utf8Buffer[..bytesWritten];
@@ -158,6 +173,11 @@ public partial class BCryptCore
 
                 try
                 {
+                    if (salt.Length < startingOffset + 25)
+                    {
+                        throw new SaltParseException("Invalid salt");
+                    }
+
                     int eInputLen = enhancedHashKeyGen(inputKey, hashType, bcryptMinorRevision, eInputBuffer);
                     Span<byte> eInputBytes = eInputBuffer[..eInputLen];
                     if (!HashBytes(eInputBytes, salt.Slice(startingOffset + 3, 22), bcryptMinorRevision, workFactor, outputBuffer, out int written))

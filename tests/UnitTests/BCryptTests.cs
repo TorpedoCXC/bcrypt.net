@@ -682,6 +682,21 @@ namespace BCryptNet.UnitTests
             Trace.WriteLine("");
         }
 
+        [Theory]
+        [InlineData("$2")]
+        [InlineData("$2a$10$tooshort")]
+        public void Verify_WithMalformedShortHash_ThrowsSaltParseException(string hash)
+        {
+            Assert.Throws<SaltParseException>(() => BCrypt.Verify("password", hash));
+        }
+
+        [Fact]
+        public void Verify_WithHashLongerThan60Chars_ReturnsFalse()
+        {
+            const string hash = "$2a$06$DCq7YPn5Rq63x1Lad4cll.TV4S6ytwfsfvkgY8jIucDrjc8deX1s.";
+            Assert.False(BCrypt.Verify(string.Empty, hash + "x"));
+        }
+
         /**
          * Test for correct hashing of non-US-ASCII passwords
          */

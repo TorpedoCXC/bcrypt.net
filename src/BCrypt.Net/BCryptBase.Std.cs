@@ -57,7 +57,7 @@ public partial class BCryptCore
         // Determine the starting offset and validate the salt
         int startingOffset;
         char bcryptMinorRevision = (char)0;
-        if (salt[0] != '$' || salt[1] != '2')
+        if (salt.Length < 3 || salt[0] != '$' || salt[1] != '2')
         {
             throw new SaltParseException("Invalid salt version");
         }
@@ -68,6 +68,11 @@ public partial class BCryptCore
         }
         else
         {
+            if (salt.Length < 4)
+            {
+                throw new SaltParseException("Invalid salt revision");
+            }
+
             bcryptMinorRevision = salt[2];
             if (bcryptMinorRevision != 'a' && bcryptMinorRevision != 'b' && bcryptMinorRevision != 'x' &&
                 bcryptMinorRevision != 'y' || salt[3] != '$')
@@ -79,6 +84,11 @@ public partial class BCryptCore
         }
 
         // Extract number of rounds
+        if (salt.Length <= startingOffset + 2 || salt[startingOffset + 2] != '$')
+        {
+            throw new SaltParseException("Missing salt rounds");
+        }
+
         if (!int.TryParse(salt.Slice(startingOffset, 2).ToString(),
                 NumberStyles.None, CultureInfo.InvariantCulture, out int workFactor))
         {
@@ -111,6 +121,11 @@ public partial class BCryptCore
 
                 inputBytes = enhancedHashKeyGen(inputKey, hashType, bcryptMinorRevision).ToArray();
                 break;
+        }
+
+        if (salt.Length < startingOffset + 25)
+        {
+            throw new SaltParseException("Invalid salt");
         }
 
         return HashBytes(inputBytes, salt.Slice(startingOffset + 3, 22).ToString(), bcryptMinorRevision, workFactor);

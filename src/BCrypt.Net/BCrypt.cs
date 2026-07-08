@@ -245,6 +245,11 @@ public sealed class BCrypt : BCryptCore
         /// <exception cref="SaltParseException">Thrown when the salt could not be parsed.</exception>
         public static bool Verify(ReadOnlySpan<char> text, ReadOnlySpan<char> hash)
         {
+            if (SafeUTF8.GetByteCount(hash) > 60)
+            {
+                return false;
+            }
+
             Span<byte> hashBytes = stackalloc byte[60];
             int hashLen = SafeUTF8.GetBytes(hash, hashBytes);
 
