@@ -88,19 +88,18 @@ public sealed class BCrypt : BCryptCore
         if (currentKey == null)
             throw new ArgumentNullException(nameof(currentKey));
 
+        if (newKey == null)
+            throw new ArgumentNullException(nameof(newKey));
+
         if (string.IsNullOrEmpty(currentHash) || currentHash.Length != 60)
             throw new ArgumentException("Invalid Hash", nameof(currentHash));
-
-        // Throw if validation fails (password isn't valid for hash)
-        if (!Verify(currentKey, currentHash))
-            throw new BcryptAuthenticationException("Current credentials could not be authenticated");
 
         // Throw if invalid BCrypt Version
         if (currentHash[0] != '$' || currentHash[1] != '2')
             throw new SaltParseException("Invalid bcrypt version");
 
-        // Throw if log rounds are out of range on hash, deals with custom salts
-        if (workFactor < 1 || workFactor > 31)
+        // Throw if requested log rounds are out of range
+        if (workFactor < MinRounds || workFactor > MaxRounds)
             throw new SaltParseException("Work factor out of range");
 
         // Determine the starting offset and validate the salt
@@ -118,13 +117,20 @@ public sealed class BCrypt : BCryptCore
         }
 
         // Extract number of rounds
-        if (currentHash[startingOffset + 2] > '$')
+        if (currentHash[startingOffset + 2] != '$')
         {
             throw new SaltParseException("Missing work factor");
         }
 
         // Extract details from salt
-        int currentWorkFactor = Convert.ToInt16(currentHash.Substring(startingOffset, 2), CultureInfo.InvariantCulture);
+        if (!int.TryParse(currentHash.Substring(startingOffset, 2), NumberStyles.None, CultureInfo.InvariantCulture, out int currentWorkFactor))
+        {
+            throw new SaltParseException("Missing work factor");
+        }
+
+        // Throw if validation fails (password isn't valid for hash)
+        if (!Verify(currentKey, currentHash))
+            throw new BcryptAuthenticationException("Current credentials could not be authenticated");
 
         // Never downgrade work-factor (unless forced)
         if (!forceWorkFactor && currentWorkFactor > workFactor)

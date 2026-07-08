@@ -585,6 +585,33 @@ namespace BCryptNet.UnitTests
             Trace.Write(".");
         }
 
+        [Fact]
+        public void ValidateAndUpgradeHash_WithInvalidWorkFactor_ThrowsSaltParseException()
+        {
+            const string currentHash = "$2a$12$WApznUOJfkEGSmYRfnkrPOr466oFDCaj4b6HY3EXGvfxm43seyhgC";
+
+            Assert.Throws<SaltParseException>(() =>
+                BCrypt.ValidateAndUpgradeHash("wrong-current-password", currentHash, "new-password", workFactor: 1));
+        }
+
+        [Fact]
+        public void ValidateAndUpgradeHash_WithMalformedWorkFactorDelimiter_ThrowsSaltParseExceptionBeforeAuthentication()
+        {
+            const string malformedHash = "$2a$12!WApznUOJfkEGSmYRfnkrPOr466oFDCaj4b6HY3EXGvfxm43seyhgC";
+
+            Assert.Throws<SaltParseException>(() =>
+                BCrypt.ValidateAndUpgradeHash("wrong-current-password", malformedHash, "new-password"));
+        }
+
+        [Fact]
+        public void ValidateAndUpgradeHash_WithNonNumericWorkFactor_ThrowsSaltParseException()
+        {
+            const string malformedHash = "$2a$1!$WApznUOJfkEGSmYRfnkrPOr466oFDCaj4b6HY3EXGvfxm43seyhgC";
+
+            Assert.Throws<SaltParseException>(() =>
+                BCrypt.ValidateAndUpgradeHash("wrong-current-password", malformedHash, "new-password"));
+        }
+
 
         /**
          * Test method for 'BCrypt.GenerateSalt(int)'
