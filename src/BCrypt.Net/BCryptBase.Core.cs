@@ -132,13 +132,20 @@ public partial class BCryptCore
                     throw new ArgumentException("Invalid input key: input key cannot exceed 72 bytes for bCrypt", nameof(inputKey));
                 }
                 Span<byte> utf8Buffer = stackalloc byte[SafeUTF8.GetMaxByteCount(inputKey.Length + (appendNul ? 1 : 0))];
-                int bytesWritten = SafeUTF8.GetBytes(inputKey, utf8Buffer);
-                if (appendNul) utf8Buffer[bytesWritten++] = 0;
-                Span<byte> inputBytes = utf8Buffer[..bytesWritten];
-                if (!HashBytes(inputBytes, salt.Slice(startingOffset + 3, 22), bcryptMinorRevision, workFactor, outputBuffer, out int hashBytesWritten))
-                    throw new BcryptAuthenticationException("Couldn't hash input");
-                ZeroMemory(utf8Buffer);
-                outputBufferWritten = hashBytesWritten;
+                try
+                {
+                    int bytesWritten = SafeUTF8.GetBytes(inputKey, utf8Buffer);
+                    if (appendNul) utf8Buffer[bytesWritten++] = 0;
+                    Span<byte> inputBytes = utf8Buffer[..bytesWritten];
+                    if (!HashBytes(inputBytes, salt.Slice(startingOffset + 3, 22), bcryptMinorRevision, workFactor, outputBuffer, out int hashBytesWritten))
+                        throw new BcryptAuthenticationException("Couldn't hash input");
+                    outputBufferWritten = hashBytesWritten;
+                }
+                finally
+                {
+                    ZeroMemory(utf8Buffer);
+                }
+
                 return;
 
             default:
@@ -148,12 +155,19 @@ public partial class BCryptCore
                 }
 
                 Span<byte> eInputBuffer = stackalloc byte[128];
-                int eInputLen = enhancedHashKeyGen(inputKey, hashType, bcryptMinorRevision, eInputBuffer);
-                Span<byte> eInputBytes = eInputBuffer[..eInputLen];
-                if (!HashBytes(eInputBytes, salt.Slice(startingOffset + 3, 22), bcryptMinorRevision, workFactor, outputBuffer, out int written))
-                    throw new BcryptAuthenticationException("Couldn't hash input");
-                ZeroMemory(eInputBuffer);
-                outputBufferWritten = written;
+
+                try
+                {
+                    int eInputLen = enhancedHashKeyGen(inputKey, hashType, bcryptMinorRevision, eInputBuffer);
+                    Span<byte> eInputBytes = eInputBuffer[..eInputLen];
+                    if (!HashBytes(eInputBytes, salt.Slice(startingOffset + 3, 22), bcryptMinorRevision, workFactor, outputBuffer, out int written))
+                        throw new BcryptAuthenticationException("Couldn't hash input");
+                    outputBufferWritten = written;
+                }
+                finally
+                {
+                    ZeroMemory(eInputBuffer);
+                }
 
                 return;
         }
