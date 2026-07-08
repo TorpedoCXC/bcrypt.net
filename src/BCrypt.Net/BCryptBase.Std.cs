@@ -412,9 +412,6 @@ public partial class BCryptCore
     [SuppressMessage("Major Code Smell", "S127:\"for\" loop stop conditions should be invariant")]
     internal byte[] CryptRaw(ReadOnlySpan<byte> inputBytes, ReadOnlySpan<byte> saltBytes, int workFactor)
     {
-        int i;
-        int j;
-
         Span<uint> cdata = stackalloc uint[BfCryptCiphertext.Length];
         BfCryptCiphertext.CopyTo(cdata);
 
@@ -443,12 +440,12 @@ public partial class BCryptCore
         {
             EKSKey(saltBytes, inputBytes);
 
-            for (i = 0; i != rounds; i++)
+            for (uint ix = 0; ix != rounds; ix++)
             {
                 Key(inputBytes);
                 Key(saltBytes);
             }
-
+            int i, j;
             for (i = 0; i < 64; i++)
             {
                 for (j = 0; j < (clen >> 1); j++)

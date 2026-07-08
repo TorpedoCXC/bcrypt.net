@@ -366,14 +366,13 @@ public partial class BCryptCore
         {
             EKSKey(saltBytes, inputBytes);
 
-            int i, j;
-
-            for (i = 0; i != rounds; i++)
+            for (uint ix = 0; ix != rounds; ix++)
             {
                 Key(inputBytes);
                 Key(saltBytes);
             }
 
+            int i, j;
             for (i = 0; i < 64; i++)
             {
                 for (j = 0; j < (clen >> 1); j++)
