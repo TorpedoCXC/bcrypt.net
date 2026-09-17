@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPublishable>False</IsPublishable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\bcrypt.snk</AssemblyOriginatorKeyFile>
+    <PublicKey>1e11be04b6288443</PublicKey>
+    <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="BenchmarkDotNet" />
+    <Using Include="BenchmarkDotNet.Attributes" />
+  </ItemGroup>
+</Project>
